@@ -1,6 +1,6 @@
-package com.github.eliasnorrby.kafka.tutorial2;
+package kafka.tutorial2;
 
-import com.github.eliasnorrby.kafka.tutorial2.util.ApplicationProperties;
+import kafka.tutorial2.util.ApplicationProperties;
 import com.google.common.collect.Lists;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;

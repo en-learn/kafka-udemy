@@ -1,4 +1,4 @@
-package com.github.eliasnorrby.kafka.tutorial2.util;
+package kafka.tutorial2.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;

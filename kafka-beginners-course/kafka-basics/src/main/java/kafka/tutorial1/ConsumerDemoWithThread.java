@@ -1,4 +1,4 @@
-package com.github.eliasnorrby.kafka.tutorial1;
+package kafka.tutorial1;
 
 import java.time.Duration;
 import java.util.Arrays;

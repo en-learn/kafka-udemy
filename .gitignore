@@ -2,3 +2,4 @@ _course-materials
 _data
 zsh-completion
 config.properties
+target/

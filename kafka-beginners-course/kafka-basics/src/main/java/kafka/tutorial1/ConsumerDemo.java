@@ -1,4 +1,4 @@
-package com.github.eliasnorrby.kafka.tutorial1;
+package kafka.tutorial1;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -11,13 +11,13 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConsumerDemoGroups {
+public class ConsumerDemo {
   public static void main(String[] args) {
 
-    Logger logger = LoggerFactory.getLogger(ConsumerDemoGroups.class.getName());
+    Logger logger = LoggerFactory.getLogger(ConsumerDemo.class.getName());
 
     String bootstrapServers = "127.0.0.1:9092";
-    String groupId = "my-fifth-application";
+    String groupId = "my-fourth-application";
     String topic = "first_topic";
 
     // create consumer configs
@@ -38,7 +38,7 @@ public class ConsumerDemoGroups {
 
     // poll for new data
     while (true) {
-      //            consumer.poll(100); // new in Kafka 2.0.0
+      // consumer.poll(100); // new in Kafka 2.0.0
       ConsumerRecords<String, String> records =
           consumer.poll(Duration.ofMillis(100)); // new in Kafka 2.0.0
 
