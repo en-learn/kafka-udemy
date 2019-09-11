@@ -1,4 +1,4 @@
-package kafka.tutorial2.util;
+package com.github.eliasnorrby.kafka.tutorial3.util;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -19,16 +19,13 @@ public enum ApplicationProperties {
         }
     }
 
-    public String getConsumerKey() {
-        return properties.getProperty("consumerKey");
+    public String getHostname() {
+        return properties.getProperty("hostname");
     }
-    public String getConsumerSecret() {
-        return properties.getProperty("consumerSecret");
+    public String getUsername() {
+        return properties.getProperty("username");
     }
-    public String getToken() {
-        return properties.getProperty("token");
-    }
-    public String getSecret() {
-        return properties.getProperty("secret");
+    public String getPassword() {
+        return properties.getProperty("password");
     }
 }
