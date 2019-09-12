@@ -1,6 +1,11 @@
 package com.github.eliasnorrby.kafka.tutorial3;
 
 import com.github.eliasnorrby.kafka.tutorial3.util.ApplicationProperties;
+import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Properties;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -22,12 +27,9 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Properties;
-
 public class ElasticsearchConsumer {
+
+  private static JsonParser jsonParser = new JsonParser();
 
   public static RestHighLevelClient createClient() {
     String hostname = ApplicationProperties.INSTANCE.getHostname();
@@ -35,17 +37,20 @@ public class ElasticsearchConsumer {
     String password = ApplicationProperties.INSTANCE.getPassword();
 
     final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+    credentialsProvider.setCredentials(
+        AuthScope.ANY, new UsernamePasswordCredentials(username, password));
 
-    RestClientBuilder builder = RestClient.builder(
-      new HttpHost(hostname, 443, "https"))
-      .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                                     @Override
-                                     public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpAsyncClientBuilder) {
-                                       return httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                                     }
-                                   }
-      );
+    RestClientBuilder builder =
+        RestClient.builder(new HttpHost(hostname, 443, "https"))
+            .setHttpClientConfigCallback(
+                new RestClientBuilder.HttpClientConfigCallback() {
+                  @Override
+                  public HttpAsyncClientBuilder customizeHttpClient(
+                      HttpAsyncClientBuilder httpAsyncClientBuilder) {
+                    return httpAsyncClientBuilder.setDefaultCredentialsProvider(
+                        credentialsProvider);
+                  }
+                });
 
     RestHighLevelClient client = new RestHighLevelClient(builder);
     return client;
@@ -60,9 +65,9 @@ public class ElasticsearchConsumer {
     Properties properties = new Properties();
     properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.setProperty(
-      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     properties.setProperty(
-      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
@@ -73,33 +78,45 @@ public class ElasticsearchConsumer {
     return consumer;
   }
 
+  private static String extractIdFromTweet(String tweetJson) {
+    // gson library
+    return jsonParser.parse(tweetJson).getAsJsonObject().get("id_str").getAsString();
+  }
+
   public static void main(String[] args) throws IOException {
     Logger logger = LoggerFactory.getLogger(ElasticsearchConsumer.class.getName());
     RestHighLevelClient client = createClient();
 
-
     KafkaConsumer<String, String> consumer = createConsumer("twitter_tweets");
 
     while (true) {
-      ConsumerRecords<String, String> records =
-        consumer.poll(Duration.ofMillis(100));
+      ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 
       for (ConsumerRecord<String, String> record : records) {
-        // where we insert data into Elasticsearch
+        // 2 strategies for generating IDs
+        // kafka generic ID
+        // String id = record.topic() + "_" + record.partition() + "_" + record.offset();
 
-        IndexRequest indexRequest = new IndexRequest(
-          "twitter", "tweets"
-        ).source(record.value(), XContentType.JSON);
+        // twitter feed specific id
+        String id = extractIdFromTweet(record.value());
+
+        // where we insert data into Elasticsearch
+        // deprecated style
+        // IndexRequest indexRequest = new IndexRequest(
+        //   "twitter","tweets",
+        //   id
+        // ).source(record.value(), XContentType.JSON);
+        IndexRequest indexRequest =
+            new IndexRequest("twitter").id(id).source(record.value(), XContentType.JSON);
 
         IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-        String id = indexResponse.getId();
-        logger.info(id);
+
+        logger.info(indexResponse.getId());
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-
       }
     }
     // close the client gracefully
